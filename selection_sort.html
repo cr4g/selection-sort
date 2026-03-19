@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selection Sort Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #a8d8f0 0%, #c5e8f7 40%, #d6eefa 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .slide {
+    background: linear-gradient(160deg, #e8f6fd 0%, #f0faff 100%);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 960px;
+    box-shadow: 0 20px 60px rgba(60,120,180,0.18);
+    overflow: hidden;
+    border: 2px solid rgba(100,180,240,0.3);
+  }
+
+  .header {
+    background: linear-gradient(90deg, #5b7ecb 0%, #7b9ee0 60%, #9bb8ee 100%);
+    padding: 22px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    right: 60px; top: 10px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+  }
+  .header h1 {
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .body {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 0;
+    padding: 28px 32px 28px 28px;
+    align-items: start;
+  }
+
+  /* LEFT PANEL */
+  .left-panel {}
+
+  .steps-list {
+    list-style: none;
+    margin-bottom: 22px;
+  }
+  .steps-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: #445;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .steps-list li .dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+  .dot-blue   { background: #5b7ecb; }
+  .dot-teal   { background: #38b2ac; }
+  .dot-purple { background: #9b5de5; }
+  .dot-green  { background: #48bb78; }
+
+  .code-block {
+    background: rgba(255,255,255,0.7);
+    border-radius: 12px;
+    padding: 16px 18px;
+    border: 1.5px solid rgba(91,126,203,0.2);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    line-height: 1.9;
+    color: #334;
+    margin-bottom: 18px;
+  }
+  .code-line {
+    display: block;
+    padding: 2px 6px;
+    border-radius: 5px;
+    transition: background 0.25s, color 0.25s;
+    white-space: pre;
+  }
+  .code-line.active {
+    background: #5b7ecb;
+    color: #fff;
+    font-weight: 700;
+  }
+  .code-line.dim { opacity: 0.35; }
+
+  .state-box {
+    background: rgba(255,255,255,0.7);
+    border-radius: 12px;
+    padding: 12px 16px;
+    border: 1.5px solid rgba(91,126,203,0.2);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    color: #334;
+    line-height: 1.8;
+    min-height: 64px;
+  }
+  .state-box span { font-weight: 700; color: #5b7ecb; }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .array-grid {
+    width: 100%;
+  }
+
+  .col-labels {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    margin-bottom: 4px;
+    padding: 0 2px;
+  }
+  .col-label {
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #5b7ecb;
+  }
+
+  .pass-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .cell {
+    background: #fff;
+    border-radius: 8px;
+    text-align: center;
+    padding: 10px 4px;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #334;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+
+  /* States */
+  .cell.sorted {
+    background: linear-gradient(135deg, #c6f6d5, #9ae6b4);
+    color: #276749;
+    border-color: #48bb78;
+  }
+  .cell.current-i {
+    background: linear-gradient(135deg, #bee3f8, #90cdf4);
+    color: #2a69ac;
+    border-color: #5b7ecb;
+    transform: scale(1.08);
+    box-shadow: 0 4px 14px rgba(91,126,203,0.35);
+    z-index: 2;
+  }
+  .cell.current-j {
+    background: linear-gradient(135deg, #fefcbf, #faf089);
+    color: #744210;
+    border-color: #ecc94b;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(236,201,75,0.4);
+    z-index: 2;
+  }
+  .cell.min-index {
+    background: linear-gradient(135deg, #fed7e2, #feb2c0);
+    color: #702459;
+    border-color: #e8648c;
+    box-shadow: 0 4px 12px rgba(232,100,140,0.35);
+    transform: scale(1.07);
+    z-index: 3;
+  }
+  .cell.swapping {
+    animation: swap-pulse 0.5s ease;
+  }
+  @keyframes swap-pulse {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.18) translateY(-6px); }
+    100% { transform: scale(1.08); }
+  }
+
+  .pass-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-left: 2px;
+    align-self: center;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn {
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.18s;
+    letter-spacing: 0.2px;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary {
+    background: linear-gradient(135deg, #5b7ecb, #7b9ee0);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(91,126,203,0.35);
+  }
+  .btn-primary:hover { background: linear-gradient(135deg, #4a6ec0, #6a8dd0); }
+  .btn-secondary {
+    background: rgba(255,255,255,0.8);
+    color: #5b7ecb;
+    border: 2px solid #5b7ecb;
+  }
+  .btn-secondary:hover { background: #5b7ecb; color: #fff; }
+  .btn-danger {
+    background: linear-gradient(135deg, #fc8181, #f56565);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(245,101,101,0.3);
+  }
+
+  .speed-group {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.8rem; font-weight: 700; color: #557;
+  }
+  input[type=range] { width: 90px; accent-color: #5b7ecb; }
+
+  .legend {
+    display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+    font-size: 0.72rem; font-weight: 700; color: #556;
+  }
+  .leg { display: flex; align-items: center; gap: 5px; }
+  .leg-box {
+    width: 14px; height: 14px; border-radius: 4px;
+    border: 2px solid transparent;
+  }
+  .leg-i   { background: linear-gradient(135deg,#bee3f8,#90cdf4); border-color:#5b7ecb; }
+  .leg-j   { background: linear-gradient(135deg,#fefcbf,#faf089); border-color:#ecc94b; }
+  .leg-min { background: linear-gradient(135deg,#fed7e2,#feb2c0); border-color:#e8648c; }
+  .leg-sorted { background: linear-gradient(135deg,#c6f6d5,#9ae6b4); border-color:#48bb78; }
+
+  .done-msg {
+    display: none;
+    background: linear-gradient(135deg,#c6f6d5,#9ae6b4);
+    color: #276749;
+    border-radius: 10px;
+    padding: 10px 22px;
+    font-size: 1rem;
+    font-weight: 800;
+    text-align: center;
+    border: 2px solid #48bb78;
+  }
+</style>
+</head>
+<body>
+
+<div class="slide">
+  <div class="header">
+    <h1>How does Selection Sort work? (Simulation)</h1>
+  </div>
+  <div class="body">
+
+    <!-- LEFT -->
+    <div class="left-panel">
+      <ul class="steps-list">
+        <li><span class="dot dot-blue"></span>Find the smallest element in the list.</li>
+        <li><span class="dot dot-teal"></span>Swap it with the first element.</li>
+        <li><span class="dot dot-purple"></span>Move to the next position.</li>
+        <li><span class="dot dot-green"></span>Repeat the process until the list is sorted.</li>
+      </ul>
+
+      <div class="code-block" id="code">
+        <span class="code-line" id="cl0">SelectionSort(A, n)</span>
+        <span class="code-line" id="cl1"> </span>
+        <span class="code-line" id="cl2">for i = 0 to n-2</span>
+        <span class="code-line" id="cl3">  minIndex = i</span>
+        <span class="code-line" id="cl4"> </span>
+        <span class="code-line" id="cl5">  for j = i+1 to n-1</span>
+        <span class="code-line" id="cl6">    if A[j] &lt; A[minIndex]</span>
+        <span class="code-line" id="cl7">      minIndex = j</span>
+        <span class="code-line" id="cl8"> </span>
+        <span class="code-line" id="cl9">  swap A[i] and A[minIndex]</span>
+      </div>
+
+      <div class="state-box" id="stateBox">
+        Press <b>Next Step</b> or <b>Auto Play</b> to begin.
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-panel">
+      <div class="array-grid">
+        <div class="col-labels" id="colLabels"></div>
+        <div id="passRows"></div>
+      </div>
+
+      <div class="legend">
+        <div class="leg"><div class="leg-box leg-i"></div> i (outer loop)</div>
+        <div class="leg"><div class="leg-box leg-j"></div> j (scanning)</div>
+        <div class="leg"><div class="leg-box leg-min"></div> minIndex</div>
+        <div class="leg"><div class="leg-box leg-sorted"></div> sorted</div>
+      </div>
+
+
+
+      <div class="done-msg" id="doneMsg" style="cursor:pointer;">🎉 Array Sorted! &nbsp;Press R or click to replay</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const INITIAL = [57, 34, 13, 8, 29, 5, 66, 17];
+const N = INITIAL.length;
+
+let arr = [...INITIAL];
+let steps = [];
+let stepIdx = 0;
+
+// --- Build all steps upfront ---
+function buildSteps() {
+  let a = [...INITIAL];
+  let s = [];
+
+  // Start
+  s.push({ code: 'cl2', state: 'i = 0\nMinimum = i', i: null, j: null, min: null, sorted: [] });
+
+  for (let i = 0; i < N - 1; i++) {
+    let sorted = Array.from({length: i}, (_,k)=>k);
+    s.push({ code: 'cl2', state: `for i = ${i}`, i, j: null, min: null, sorted, arr: [...a] });
+    s.push({ code: 'cl3', state: `i = ${i}\nminIndex = ${i}`, i, j: null, min: i, sorted, arr: [...a] });
+
+    let minIdx = i;
+    for (let j = i + 1; j < N; j++) {
+      s.push({ code: 'cl5', state: `i=${i}, j=${j}\nminIndex=${minIdx}`, i, j, min: minIdx, sorted, arr: [...a] });
+      s.push({ code: 'cl6', state: `A[${j}]=${a[j]} < A[${minIdx}]=${a[minIdx]}?  ${a[j]<a[minIdx]?'Yes':'No'}`, i, j, min: minIdx, sorted, arr: [...a] });
+      if (a[j] < a[minIdx]) {
+        minIdx = j;
+        s.push({ code: 'cl7', state: `minIndex = ${minIdx}`, i, j, min: minIdx, sorted, arr: [...a] });
+      }
+    }
+
+    // swap
+    s.push({ code: 'cl9', state: `Swap A[${i}]=${a[i]} ↔ A[${minIdx}]=${a[minIdx]}`, i, j: null, min: minIdx, sorted, arr: [...a], swapping: [i, minIdx] });
+    [a[i], a[minIdx]] = [a[minIdx], a[i]];
+    let newSorted = Array.from({length: i+1}, (_,k)=>k);
+    s.push({ code: 'cl2', state: `Pass ${i} done`, i: null, j: null, min: null, sorted: newSorted, arr: [...a] });
+  }
+
+  // Done
+  s.push({ code: null, state: `Sorted!`, i: null, j: null, min: null, sorted: Array.from({length:N},(_,k)=>k), arr: [...a], done: true });
+  return s;
+}
+
+// --- Render ---
+function renderColLabels() {
+  const el = document.getElementById('colLabels');
+  el.innerHTML = Array.from({length:N},(_,i)=>`<div class="col-label">${i}</div>`).join('');
+}
+
+function renderRow(arrState, highlight) {
+  // highlight: {i, j, min, sorted:[], swapping:[]}
+  return arrState.map((val, idx) => {
+    let cls = 'cell';
+    if (highlight.sorted && highlight.sorted.includes(idx)) cls += ' sorted';
+    if (highlight.swapping && highlight.swapping.includes(idx)) cls += ' swapping';
+    else if (idx === highlight.min && highlight.min !== null) cls += ' min-index';
+    else if (idx === highlight.j && highlight.j !== null) cls += ' current-j';
+    else if (idx === highlight.i && highlight.i !== null) cls += ' current-i';
+    return `<div class="${cls}">${val}</div>`;
+  }).join('');
+}
+
+// We show all passes as rows, highlight the current pass row
+let passHistory = []; // array of {arr, passLabel}
+
+function applyStep(step) {
+  // Update array display
+  // Show current array in all rows up to current pass
+  const rowContainer = document.getElementById('passRows');
+
+  // Determine which pass row to highlight (pass = i)
+  const currentPass = step.i !== null ? step.i : (step.sorted ? step.sorted.length - 1 : 0);
+  const rowArr = step.arr || [...INITIAL];
+
+  // Rebuild all rows
+  let html = '';
+  for (let p = 0; p < N - 1; p++) {
+    let h = { i: null, j: null, min: null, sorted: [], swapping: [] };
+    if (p === currentPass || (step.i !== null && p === step.i)) {
+      h = { i: step.i, j: step.j, min: step.min, sorted: step.sorted || [], swapping: step.swapping || [] };
+    } else if (step.sorted && step.sorted.includes(p)) {
+      h = { sorted: step.sorted || [] };
+    } else {
+      h = { sorted: step.sorted || [] };
+    }
+    html += `<div class="pass-row">${renderRow(rowArr, h)}</div>`;
+  }
+  rowContainer.innerHTML = html;
+
+  // Highlight code
+  document.querySelectorAll('.code-line').forEach(el => {
+    el.classList.remove('active', 'dim');
+  });
+  if (step.code) {
+    document.getElementById(step.code)?.classList.add('active');
+    document.querySelectorAll('.code-line').forEach(el => {
+      if (el.id !== step.code) el.classList.add('dim');
+    });
+  }
+
+  // State box
+  const sb = document.getElementById('stateBox');
+  if (step.i !== null) {
+    const iVal = step.i;
+    const jVal = step.j;
+    const minVal = step.min;
+    let html2 = `<span>i</span> = ${iVal}`;
+    if (jVal !== null) html2 += `&nbsp;&nbsp;<span>j</span> = ${jVal}`;
+    if (minVal !== null) html2 += `<br><span>minIndex</span> = ${minVal} (${step.arr?step.arr[minVal]:'?'})`;
+    if (step.swapping) html2 += `<br>⇄ Swapping positions ${step.swapping[0]} &amp; ${step.swapping[1]}`;
+    sb.innerHTML = html2;
+  } else {
+    sb.innerHTML = step.state.replace('\n','<br>');
+  }
+
+  // Done
+  const doneMsg = document.getElementById('doneMsg');
+  if (step.done) {
+    doneMsg.style.display = 'block';
+  } else {
+    doneMsg.style.display = 'none';
+  }
+}
+
+function init() {
+  arr = [...INITIAL];
+  steps = buildSteps();
+  stepIdx = 0;
+  renderColLabels();
+
+  // Show initial array (all rows same)
+  const rowContainer = document.getElementById('passRows');
+  let html = '';
+  for (let p = 0; p < N - 1; p++) {
+    html += `<div class="pass-row">${renderRow(INITIAL, {sorted:[],i:null,j:null,min:null})}</div>`;
+  }
+  rowContainer.innerHTML = html;
+
+  document.querySelectorAll('.code-line').forEach(el => el.classList.remove('active','dim'));
+  document.getElementById('stateBox').innerHTML = 'Press <b>→</b> to step forward, <b>←</b> to go back, <b>R</b> to reset.';
+  document.getElementById('doneMsg').style.display = 'none';
+  stopAuto();
+}
+
+function nextStep() {
+  if (stepIdx >= steps.length) return;
+  applyStep(steps[stepIdx]);
+  stepIdx++;
+}
+
+function prevStep() {
+  if (stepIdx <= 1) return;
+  stepIdx -= 2;
+  applyStep(steps[stepIdx]);
+  stepIdx++;
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    nextStep();
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    prevStep();
+  } else if (e.key === 'r' || e.key === 'R') {
+    init();
+  }
+});
+
+document.getElementById('doneMsg').addEventListener('click', init);
+
+init();
+</script>
+</body>
+</html>
